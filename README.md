@@ -4,5 +4,6 @@
 ## 功能
 用ESP32對手機進行藍芽連線，當門開啟時錄製影片，直到門被閉合，即可抓到電費小偷
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+## 硬體需求
+- ESP32
+- 一支執行Android 5.0以上的手機
