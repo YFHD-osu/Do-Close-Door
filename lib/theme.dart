@@ -7,6 +7,11 @@ class AppThemeData {
     primaryColorDark: Colors.grey[800],
     primaryColorLight: Colors.grey[300],
     primarySwatch: Colors.blue,
+    textTheme: const TextTheme(
+      displayMedium: TextStyle(
+        color: Colors.white
+      )
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),
@@ -32,6 +37,11 @@ class AppThemeData {
     primaryColorDark: Colors.grey[100],
     primaryColorLight: Colors.white,
     primarySwatch: Colors.blue,
+    textTheme: const TextTheme(
+      displayMedium: TextStyle(
+        color: Colors.black
+      )
+    ),
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 10),

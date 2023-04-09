@@ -1,7 +1,10 @@
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:flutter/material.dart';
 import 'dart:isolate';
+import 'package:flutter/material.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 
+void main() => runApp(const ExampleApp());
+
+// The callback function should always be a top-level function.
 @pragma('vm:entry-point')
 void startCallback() {
   // The setTaskHandler function must be called to handle the task in the background.
@@ -59,6 +62,21 @@ class MyTaskHandler extends TaskHandler {
     // signal it to restore state when the app is already started.
     FlutterForegroundTask.launchApp("/resume-route");
     _sendPort?.send('onNotificationPressed');
+  }
+}
+
+class ExampleApp extends StatelessWidget {
+  const ExampleApp({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const ExamplePage(),
+        '/resume-route': (context) => const ResumeRoutePage(),
+      },
+    );
   }
 }
 
@@ -217,8 +235,8 @@ class _ExamplePageState extends State<ExamplePage> {
   Widget _buildContentView() {
     buttonBuilder(String text, {VoidCallback? onPressed}) {
       return ElevatedButton(
-        child: Text(text),
         onPressed: onPressed,
+        child: Text(text)
       );
     }
 
@@ -226,7 +244,7 @@ class _ExamplePageState extends State<ExamplePage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          buttonBuilder('start', onPressed: () async => print(await _startForegroundTask())),
+          buttonBuilder('start', onPressed: _startForegroundTask),
           buttonBuilder('stop', onPressed: _stopForegroundTask),
         ],
       ),

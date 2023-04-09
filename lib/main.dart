@@ -1,65 +1,85 @@
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:floating/floating.dart';
 import 'package:flutter/material.dart';
 import 'package:camera/camera.dart';
 import 'page/permission_page.dart';
 import 'page/home_page.dart';
-import 'theme.dart' ;
-import 'dart:io';
+import 'settings_value.dart';
 import 'foreground.dart';
+import 'theme.dart';
 
-late ValueNotifier<bool> isLight;
-late ValueNotifier<bool> permsEnough;
-late Directory? appPath;
+final Settings settings = Settings();
+final floating = Floating();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   cameras = await availableCameras();
-  permsEnough =  ValueNotifier<bool>( // @
-    await Permission.bluetoothConnect.status.isGranted &&
-    await Permission.bluetoothAdvertise.status.isGranted &&
-    await Permission.bluetoothScan.status.isGranted
-  );
-  isLight = ValueNotifier<bool>(
-    false
-  );
-  appPath = await getExternalStorageDirectory();
-  runApp(const MyApp());
+  await settings.initState();
+  runApp(const App());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class App extends StatefulWidget {
+  const App({super.key});
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<App> createState() => _AppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class _AppState extends State<App> {
+
   @override
-  initState() {
+  void initState() {
     super.initState();
-    isLight.addListener(() => setState(() {})); // Detect theme change
-    permsEnough.addListener(() => setState(() {})); // Detect if permission is enough
+    settings.isDark.addListener(() => setState(() {})); // Detect theme change
+    settings.permsEnough.addListener(() => setState(() {})); // Detect if permission is enough
   }
   
   @override
   void dispose() {
     super.dispose();
-    isLight.removeListener(() {});
-    permsEnough.removeListener(() {});
+    settings.isDark.removeListener(() {});
+    settings.permsEnough.removeListener(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      initialRoute: '/',
-      routes: {
-        '/': (context) => permsEnough.value ? const MyHomePage() : const PermissionPage()
-      },
       title: '監聽攝影機',
-      theme: isLight.value ? AppThemeData.lightMode : AppThemeData.darkMode,
+      theme: settings.isDark.value ? AppThemeData.darkMode : AppThemeData.lightMode,
+      home: WillStartForegroundTask(
+         onWillStart: () async {
+           // Return whether to start the foreground service.
+           return true;
+         },
+         androidNotificationOptions: AndroidNotificationOptions(
+           channelId: 'notification_channel_id',
+           channelName: '背景運作通知',
+           channelDescription: '攝影機鏡頭的後台程式',
+           channelImportance: NotificationChannelImportance.LOW,
+           priority: NotificationPriority.LOW,
+           iconData: const NotificationIconData(
+             resType: ResourceType.mipmap,
+             resPrefix: ResourcePrefix.ic,
+             name: 'launcher',
+           ),
+         ),
+         iosNotificationOptions: const IOSNotificationOptions(
+           showNotification: true,
+           playSound: false,
+         ),
+         foregroundTaskOptions: const ForegroundTaskOptions(
+           interval: 5000,
+           autoRunOnBoot: false,
+           allowWifiLock: false,
+         ),
+         notificationTitle: '攝影機客戶端正在執行',
+         notificationText: '點擊此處已返回App',
+         callback: startCallback,
+         child: 
+          PiPSwitcher(
+            childWhenDisabled: settings.permsEnough.value ? const MyHomePage() : const PermissionPage(),
+            childWhenEnabled: const PiPCameraPreview(), 
+          ),
+      )
     );
   }
 }
-
-
-

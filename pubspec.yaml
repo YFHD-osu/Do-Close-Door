@@ -36,8 +36,10 @@ dependencies:
   flutter_bluetooth_serial: ^0.4.0
   flutter_foreground_task: ^4.1.0
   permission_handler: ^10.2.0
+  shared_preferences: ^2.1.0
   path_provider: ^2.0.14
   camera: ^0.10.3+2
+  floating: ^2.0.0
 
 dev_dependencies:
   flutter_test:
