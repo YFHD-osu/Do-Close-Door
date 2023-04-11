@@ -26,29 +26,13 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => MyHomePageState();
 }
 
-class MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+class MyHomePageState extends State<MyHomePage>{
   final wakeLock = const MethodChannel('flutter.dev/PowerManager/Wakelock');
   void setStateFunc () => setState(() {});
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) async {
-    super.didChangeAppLifecycleState(state);
-    print(state);
-    lastAppState = state;
-    if (state == AppLifecycleState.paused){
-      // if (!cameraController.value.isPreviewPaused) await cameraController.pausePreview();
-    }else if (state == AppLifecycleState.resumed){
-      // if (cameraController.value.isPreviewPaused) await cameraController.resumePreview();
-    }else if (state == AppLifecycleState.inactive){
-      // await wakeLock.invokeMethod("release");
-      
-    }
-  }
-
-  @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
     switchResolution(mounted: mounted).then((bool value) => setState(() {}));
     homePageListener.addListener(setStateFunc);
     wakeLock.invokeMethod("acquire");
@@ -106,11 +90,8 @@ class MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                             IconButton(
                               icon: Icon(cameraController.value.isPreviewPaused ? Icons.visibility : Icons.visibility_off),
                               onPressed: () async {
-                                if (cameraController.value.isPreviewPaused) {
-                                  await cameraController.resumePreview();
-                                }else{
-                                  await cameraController.pausePreview();
-                                }
+                                if (cameraController.value.isPreviewPaused) {await cameraController.resumePreview();}
+                                else {await cameraController.pausePreview();}
                                 setState(() {});
                               }
                             ),
@@ -169,7 +150,7 @@ class MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
               onPressed: () async {
                 await floating.enable(aspectRatio: Rational(1, cameraController.value.aspectRatio.toInt()));
               },
-              tooltip: '近畫中畫',
+              tooltip: '小窗',
               child: const Icon(Icons.picture_in_picture),
             ),
             const SizedBox(width: 10),
@@ -180,10 +161,10 @@ class MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 if (!orignalPreviewState) cameraController.pausePreview();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const FileViewPage()),
-                ).then((value) {if (!orignalPreviewState) cameraController.resumePreview();}
+                ).then((value) async {if (!orignalPreviewState) await cameraController.resumePreview();}
                 ).then((value) => setStateFunc());
               },
-              tooltip: '檔案設定',
+              tooltip: '檔案',
               child: const Icon(Icons.folder),
             ),
             const SizedBox(width: 10),
@@ -194,10 +175,10 @@ class MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 if (!orignalPreviewState) cameraController.pausePreview();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const BluetoothPage()),
-                ).then((value) {if (!orignalPreviewState) cameraController.resumePreview();}
+                ).then((value) async {if (!orignalPreviewState) await cameraController.resumePreview();}
                 ).then((value) => setStateFunc());
               },
-              tooltip: '藍芽設定',
+              tooltip: '藍芽',
               child: Icon((connection == null) ? Icons.bluetooth : Icons.bluetooth_connected),
             ),
             const SizedBox(width: 10),
@@ -208,7 +189,7 @@ class MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 if (!orignalPreviewState) cameraController.pausePreview();
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const SettingsPage()),
-                ).then((value) {if (!orignalPreviewState) cameraController.resumePreview();}
+                ).then((value) async {if (!orignalPreviewState) await cameraController.resumePreview();}
                 ).then((value) => setStateFunc());
               }),
               tooltip: '設定',
@@ -341,14 +322,7 @@ Future<bool> switchResolution({bool mounted = true}) async {
     if (!mounted) {return;}
   }).catchError((Object e) {
     if (e is CameraException) {
-      switch (e.code) {
-        case 'CameraAccessDenied':
-        // Handle access errors here.
-          break;
-        default:
-        // Handle other errors here.
-          break;
-      }
+      print(e.code);
     }
   });
   return true;

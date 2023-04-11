@@ -13,9 +13,8 @@ class PermissionPage extends StatefulWidget {
 class _PermissionPageState extends State<PermissionPage> {
   bool bluetoothStatus = false, cameraStatus = false, locationStatus = false, overlayStatus = false;
 
-  bool isAllGranted() {
-    return settings.permsEnough.value = bluetoothStatus && cameraStatus && locationStatus;
-  }
+  bool isAllGranted() => 
+    settings.permsEnough.value = bluetoothStatus && cameraStatus && locationStatus && overlayStatus;
   
   void asyncMethod() async{
     bluetoothStatus =

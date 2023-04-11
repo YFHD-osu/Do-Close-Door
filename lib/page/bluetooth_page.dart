@@ -1,4 +1,3 @@
-import 'package:floating/floating.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,14 +6,16 @@ import 'dart:convert';
 import './../main.dart';
 import 'home_page.dart';
 
-const MethodChannel wakeLock = MethodChannel('flutter.dev/PowerManager/Wakelock');
-bool isInCloseDelay = false, cameraOrignalState = false;
+
 int? lastTemperature;
-ValueNotifier<bool> bluetoothPageListener = ValueNotifier<bool>(false);
-List<BluetoothDevice> devices = [];
-BluetoothConnection? connection;
+String lastCommand = "";
 BluetoothDevice? currentDevice;
-AppLifecycleState? notification; 
+BluetoothConnection? connection;
+AppLifecycleState? notification;
+List<BluetoothDevice> devices = [];
+bool isInCloseDelay = false, cameraOrignalState = false;
+ValueNotifier<bool> bluetoothPageListener = ValueNotifier<bool>(false);
+const MethodChannel wakeLock = MethodChannel('flutter.dev/PowerManager/Wakelock');
 
 class BluetoothPage extends StatefulWidget {
   const BluetoothPage({Key? key}) : super(key: key);
@@ -205,45 +206,34 @@ void connectionDialog (BuildContext context) async {
   );
 }
 
-Future<void> handleCommands (Uint8List data) async {
-  List<String> command = ascii.decode(data).split(":");
-  //  if (await floating.pipStatus == PiPStatus.disabled && 
-  //      lastAppState == AppLifecycleState.paused) return;
-  print("Bluetooth Function Called!");
-  print("Camera ininital? = ${cameraController.value.isInitialized}");
-  print("Camera previewPause? = ${cameraController.value.isPreviewPaused}");
-  if (command[0] == "cmd" && command.length == 3) {
-    switch(command[1]){
-      case "start_record":
-        cameraOrignalState = cameraController.value.isPreviewPaused;
-        if (!cameraController.value.isRecordingVideo) {
-          if (cameraOrignalState) cameraController.resumePreview();
-          cameraController.startVideoRecording().then((value) => homePageListener.value = !homePageListener.value);
-        }
-        break;
-      case "stop_record":
-        if (!cameraController.value.isRecordingVideo) return;
-        if (isInCloseDelay) return;
-        isInCloseDelay = true;
-
-        await Future.delayed(const Duration(milliseconds: 500));
-
-        try{
-          XFile media = await cameraController.stopVideoRecording();
-          DateTime now = DateTime.now();
-          media.saveTo("${settings.appPath!.path}/${now.year}-${now.month}-${now.day}-${now.hour}-${now.minute}-${now.second}-$lastTemperature-${command[2]}.mp4");
-          print("[Saving] ${settings.appPath!.path}/${now.year}-${now.month}-${now.day}-${now.hour}-${now.minute}-${now.second}-$lastTemperature-${command[2]}.mp4");
-          if (cameraOrignalState) cameraController.pausePreview();
-          isInCloseDelay = false;
-        }catch (e){
-          await switchResolution();
-          print("SaveError!!!!!!");
-        }finally{
-          
-        }
-
-        homePageListener.value = !homePageListener.value;
-        break;
-    }
+Future<void> handleCommands (Uint8List? data) async {
+  final List<String> command = ((data == null) ? lastCommand : ascii.decode(data)).replaceAll("\n", "").split(":");
+  print("[Bluetooth Function] Camera ininital? = ${cameraController.value.isInitialized} Camera previewPause? = ${cameraController.value.isPreviewPaused}");
+  if (!(command[0] == "cmd" && (command.length == 3 || command.length == 4))) return;
+  if (data == null && lastCommand.isEmpty) return;
+  if (isInCloseDelay) {
+    lastCommand = (data == null) ? lastCommand : ascii.decode(data);
+    Future.delayed(const Duration(milliseconds: 500)).then((value) => handleCommands(null));
+    return;
+  } else {lastCommand = "";}
+  switch(command[1]){
+    case "start_record":
+      cameraOrignalState = cameraController.value.isPreviewPaused;
+      if (cameraController.value.isRecordingVideo) return;
+      isInCloseDelay = true;
+      if (cameraOrignalState) cameraController.resumePreview();
+      cameraController.startVideoRecording().then((value) => homePageListener.value = !homePageListener.value);
+      break;
+    case "stop_record":
+      if (!cameraController.value.isRecordingVideo) return;
+      isInCloseDelay = true;
+      final DateTime now = DateTime.now();
+      final String filename = "${settings.appPath!.path}/${now.year}-${now.month}-${now.day}-${now.hour}-${now.minute}-${now.second}-$lastTemperature-${command[2]}.mp4";
+      final XFile media = await cameraController.stopVideoRecording();
+      if (command.last == "1") media.saveTo(filename);
+      if (cameraOrignalState) cameraController.pausePreview();
+      homePageListener.value = !homePageListener.value;
+      break;
   }
+  isInCloseDelay = false;
 }
