@@ -1,7 +1,10 @@
+import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:doclosedoor/main.dart';
+import './../settings_value.dart';
+
+bool isServiceSetting = false;
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({super.key});
@@ -117,6 +120,48 @@ class _SettingsColumnState extends State<SettingsColumn> {
             )
           ),
           onTap: () => setState(() => isWakeLock = !isWakeLock!),
+        ),
+        InkWell(
+          onTap: (isServiceSetting) ? null : () async {
+            setState(() => isServiceSetting = true);
+            if (!settings.isServiceRunning.value) {
+              await settings.startForegroundTask();
+            } else {
+              await settings.stopForegroundTask();
+            }
+            isServiceSetting = false;
+            setState(() => settings.isServiceRunning.value = !settings.isServiceRunning.value);
+          },
+          child: Container(
+            clipBehavior: Clip.antiAliasWithSaveLayer,
+            alignment: Alignment.centerLeft,
+            margin: const EdgeInsets.fromLTRB(10, 5, 10, 5),
+            padding: const EdgeInsets.fromLTRB(5, 0, 5, 0),
+            width: MediaQuery.of(context).size.width-20,
+            height: 50,
+            decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
+            child: Row(
+              children: [
+                const Icon(Icons.android , size: 35),
+                const SizedBox(width:10),
+                const Text("前檯服務", style: TextStyle(fontSize: 20)),
+                const Spacer(),
+                Switch(
+                  value: settings.isServiceRunning.value,
+                  onChanged: (isServiceSetting) ? null :(value) async {
+                    setState(() => isServiceSetting = true);
+                    if (value) {
+                      await settings.startForegroundTask();
+                    } else {
+                      await settings.stopForegroundTask();
+                    }
+                    isServiceSetting = false;
+                    setState(() => settings.isServiceRunning.value = value);
+                  }
+                )
+              ],
+            )
+          )
         )
       ],
     );

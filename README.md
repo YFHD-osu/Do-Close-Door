@@ -1,20 +1,16 @@
-# 關門督促系統
-為了我們班的尿性而生😐
+# doclosedoor
 
-## 功能
-用ESP32對手機進行藍芽連線，當門開啟時錄製影片，直到門被閉合，即可抓到電費小偷
+A new Flutter project.
 
-## 硬體需求
-- ESP32-S
-- 一支執行Android 5.0以上的手機
+## Getting Started
 
-## 功能
-- [x] 連線藍芽後自動開始/停止錄影
-- [x] 在關閉螢幕時繼續執行程式
-- [x] 彈窗模式(需要手動啟用)
-- [x] 可暫停、切換鏡頭、調整解析度的相機
-- [x] 設定頁面
-- [ ] 檔案管理頁面
-- [ ] 再離開App時自動進入彈窗模式
-- [ ] 建立本地(SQLite)、雲端資料庫(FireBase)
-- [ ] 本地管理Social Credit並同步至雲端資料庫
+This project is a starting point for a Flutter application.
+
+A few resources to get you started if this is your first Flutter project:
+
+- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
+- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+
+For help getting started with Flutter development, view the
+[online documentation](https://docs.flutter.dev/), which offers tutorials,
+samples, guidance on mobile development, and a full API reference.

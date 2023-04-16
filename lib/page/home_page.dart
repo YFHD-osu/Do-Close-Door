@@ -5,10 +5,10 @@ import 'package:camera/camera.dart';
 import 'bluetooth_page.dart';
 import 'settings_page.dart';
 import 'fileview_page.dart';
-import '../main.dart';
 
 late List<CameraDescription> cameras;
 late CameraController cameraController;
+final Floating floating = Floating();  
 final List<String> resolutions = ["240p", "480p", "720p", "1080p", "2160p", "Auto"];
 final List<ResolutionPreset> resolutionPreset = [
   ResolutionPreset.low, ResolutionPreset.medium, ResolutionPreset.high,

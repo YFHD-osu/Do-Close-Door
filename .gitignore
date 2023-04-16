@@ -42,3 +42,6 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+/.vscode
+/arduino/Close_Door_Sensor/u8g2Files

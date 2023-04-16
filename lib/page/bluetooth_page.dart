@@ -2,10 +2,9 @@ import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
+import './../settings_value.dart';
 import 'dart:convert';
-import './../main.dart';
 import 'home_page.dart';
-
 
 int? lastTemperature;
 String lastCommand = "";
@@ -228,7 +227,7 @@ Future<void> handleCommands (Uint8List? data) async {
       if (!cameraController.value.isRecordingVideo) return;
       isInCloseDelay = true;
       final DateTime now = DateTime.now();
-      final String filename = "${settings.appPath!.path}/${now.year}-${now.month}-${now.day}-${now.hour}-${now.minute}-${now.second}-$lastTemperature-${command[2]}.mp4";
+      final String filename = "${settings.appPath!.path}/media/${now.year}-${now.month}-${now.day}-${now.hour}-${now.minute}-${now.second}-$lastTemperature-${command[2]}.mp4";
       final XFile media = await cameraController.stopVideoRecording();
       if (command.last == "1") media.saveTo(filename);
       if (cameraOrignalState) cameraController.pausePreview();
