@@ -11,7 +11,7 @@
 #define resolution 10  // 解析度可選 1~15 位元
 // 蜂鳴器 2 設定
 #define alt_buzzerPin 25   // 無緣蜂鳴器的PWM針腳
-#define alt_pwmChannel 2   // PWM 頻道為 1
+#define alt_pwmChannel 2   // PWM 頻道為 2
 #define alt_resolution 10  // 解析度可選 1~15 位元
 // 超音波感測器
 #define trigPin 15     // 超音波感應器的 Trig Pin
@@ -36,7 +36,7 @@ Ultrasonic ultrasonic(trigPin, echoPin);
 int timeCountdown;
 void update_OLED();
 unsigned long lastUpdate;
-bool btStats = true, doorStats; 
+bool btStats = true, doorStats, isDoorTimeout = false; 
 int distanceList[] = {25, 50, 75, 100, 125, 150, 175, 200, 225, 250, 275, 300, 325, 350, 375, 400};
 
 void setup() {
@@ -49,6 +49,7 @@ void setup() {
   pinMode(alt_buzzerPin, OUTPUT);
   ledcAttachPin(buzzerPin, pwmChannel); // 開啟 PWM 通道
   ledcSetup(pwmChannel, 1000, resolution); // 開啟聲音
+  
   ledcAttachPin(alt_buzzerPin, alt_pwmChannel); // 開啟 PWM 通道
   ledcSetup(alt_pwmChannel, 1000, alt_resolution); // 開啟聲音
   pinMode(switchPin, INPUT);
@@ -61,30 +62,37 @@ void setup() {
 void loop() {
   if (analogRead(35) < 2048){ // 開門
     doorStats = true;
+    isDoorTimeout = false;
     digitalWrite(LED2Pin, doorStats);
-    Serial.println("[Info] Door is opened!");
     SerialBT.printf("cmd:start_record:%lf\n", lastTempValue.temperature);
+    Serial.printf("[BT] cmd:start_record:%lf\n", lastTempValue.temperature);
     timeCountdown = openDelay; // 一次100ms, 等200次, 共20秒 
     while (true) {
       Serial.printf("[Info] Door open count down: %d \n", timeCountdown);
       update_OLED();
       if (ultrasonic.read() < distanceList[map(analogRead(resistorPin), 0, 4096, 0, 15)]) timeCountdown = openDelay; // 有人經過，重置倒數
       if (analogRead(35) > 2048) break; // 關門時結束計時
-      if (timeCountdown <= 0 && analogRead(switchPin) > 4000){
+      if (timeCountdown <= 0 && analogRead(switchPin) > 4000) {
         ledcWrite(pwmChannel, 512); //開啟蜂鳴器聲音
         ledcWrite(alt_pwmChannel, 512); 
       } else { //關閉蜂鳴器聲音
         ledcWrite(pwmChannel, 0);
         ledcWrite(alt_pwmChannel, 0);
       }
+      if (timeCountdown < 0 && !isDoorTimeout) {
+        digitalWrite(LED1Pin, HIGH);
+        isDoorTimeout = true;
+      }
       timeCountdown -= 1;
       delay(100);
     }
     ledcWrite(pwmChannel, 0); // 關閉蜂鳴器聲音
-    SerialBT.printf("cmd:stop_record:%lf:%d\n", lastTempValue.temperature, timeCountdown<0);
-    // Serial.println(SerialBT.readString().c_str());
+    ledcWrite(alt_pwmChannel, 0);
+    SerialBT.printf("cmd:stop_record:%lf:%d\n", lastTempValue.temperature, isDoorTimeout);
+    Serial.printf("[BT] cmd:stop_record:%lf:%d\n", lastTempValue.temperature, isDoorTimeout);
   }else{ //關門
     doorStats = false;
+    digitalWrite(LED1Pin, LOW);
     digitalWrite(LED2Pin, doorStats);
   }
   
