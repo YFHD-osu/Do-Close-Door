@@ -18,17 +18,17 @@ class _SettingsPageState extends State<SettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(elevation: 0, toolbarHeight: 0),
-      body: Column(
+      body: const Column(
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
-            children: const [
+            children: [
               Icon(Icons.settings, size: 80),
               Text("設定", style: TextStyle(fontSize: 60))
             ],
           ),
-          const SizedBox(height: 10),
-          const Expanded(
+          SizedBox(height: 10),
+          Expanded(
             child: SingleChildScrollView(child: SettingsColumn())
           )
         ]

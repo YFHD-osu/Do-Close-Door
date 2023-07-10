@@ -71,7 +71,6 @@ class BluetoothPageState extends State<BluetoothPage> with WidgetsBindingObserve
                       Text(currentDevice == null ? "未連接至裝置" : currentDevice!.name.toString(), style: const TextStyle(fontSize: 30)),
                       Text(currentDevice == null ? "位置: 未連線" : "位置: ${currentDevice!.address}"),
                       Text(connection == null ? "狀態: 未連接" : connection!.isConnected ? "狀態: 已連接" : "狀態: 未連接"),
-                      Text("驗證: 已認證"),
                     ],
                   )
                 ],
@@ -88,20 +87,6 @@ class BluetoothPageState extends State<BluetoothPage> with WidgetsBindingObserve
           ),
           Column(
             children: devices.map<InkWell>((BluetoothDevice device) {
-              late IconData icon;
-              switch(device.type.toUnderlyingValue()){
-                case 1: // Classic
-                  icon = Icons.arrow_forward;
-                  break;
-                case 3: // Dual
-                  icon = Icons.compare_arrows;
-                  break;
-                case 2: // le
-                  icon = Icons.battery_full;
-                  break;
-                default:
-                  icon = Icons.question_mark;
-              }
               return InkWell(
                 child: Container(
                   clipBehavior: Clip.antiAliasWithSaveLayer,
@@ -113,34 +98,14 @@ class BluetoothPageState extends State<BluetoothPage> with WidgetsBindingObserve
                   decoration: BoxDecoration(borderRadius: BorderRadius.circular(10)),
                   child: Row(
                     children: [
-                      Icon(icon),
+                      Icon(getDeviceIcon(device)),
                       const SizedBox(width:10),
                       Text(device.name.toString(), style: const TextStyle(fontSize:20)),
                       const Spacer(),
                     ],
                   )
                 ),
-                onTap: () async {
-                  try{
-                    if (connection != null) {
-                      connection!.finish();
-                      bluetoothPageListener.value = !bluetoothPageListener.value;
-                      currentDevice = connection = null;
-                      return;
-                    }
-                    connection = await BluetoothConnection.toAddress(device.address);
-                    setState(() => currentDevice = device);
-                    connection!.input?.listen(handleCommands).onDone(() {
-                      connection = currentDevice = null;
-                      homePageListener.value = !homePageListener.value;
-                      bluetoothPageListener.value = !bluetoothPageListener.value;
-                      print('Disconnected by remote request');
-                    });
-                  }catch (exception) {
-                    print('Cannot connect, exception occured: \n ${exception.toString()}');
-                    return;
-                  }
-                },
+                onTap: () async => connectionDialog(context, device),
               );
             }).toList(),
           )
@@ -150,6 +115,7 @@ class BluetoothPageState extends State<BluetoothPage> with WidgetsBindingObserve
         heroTag: "btn1",
         onPressed: () async {
           devices = await FlutterBluetoothSerial.instance.getBondedDevices();
+          setState(() {});
         },
         tooltip: '切換主題',
         child: const Icon(Icons.refresh),
@@ -158,7 +124,118 @@ class BluetoothPageState extends State<BluetoothPage> with WidgetsBindingObserve
   }
 }
 
-void connectionDialog (BuildContext context) async {
+class ConnectionDialog extends StatefulWidget {
+  const ConnectionDialog({super.key, required this.device});
+  final BluetoothDevice device;
+  @override
+  State<ConnectionDialog> createState() => ConnectionDialogState();
+}
+
+class ConnectionDialogState extends State<ConnectionDialog> {
+  double? progressBarValue = 0;
+  String connectStatus = "連線已就緒";
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Container(
+          height: 360,
+          width: MediaQuery.of(context).size.width - 60,
+          clipBehavior: Clip.antiAliasWithSaveLayer,
+          decoration: BoxDecoration(
+            color: Theme.of(context).inputDecorationTheme.fillColor,
+            borderRadius: const BorderRadius.all(Radius.circular(10))
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  TextButton(
+                    onPressed: (progressBarValue==null) ? null : () => Navigator.pop(context), 
+                    child: const Text("取消")
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: (progressBarValue==null) ? null : () => (connection==null) ? deviceConnect(widget.device) : deciveDisconnect(), 
+                    child: Text(connection==null ? "連線" : "中斷連線")
+                  )
+                ]
+              ),
+              Center(
+                child: Column(
+                  children: [
+                    Icon(getDeviceIcon(widget.device),size: 100),
+                    Text(widget.device.name.toString(), style: const TextStyle(fontSize: 30))
+                  ]
+                )
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 20, top: 10),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("連線狀態: ${widget.device.isConnected ? "已連線" : "未連線"}"),
+                    Text("裝置位址: ${widget.device.address}"),
+                    Text("藍芽模式: ${getDeviceType(widget.device)}"),
+                    Text("配對狀態: ${getDeviceBond(widget.device)}")
+                  ]
+                )
+              ),
+              const Spacer(),
+              Center(child: Text(connectStatus)),
+              const Spacer(),
+              LinearProgressIndicator(
+                value: progressBarValue,
+              ),
+            ]
+          )
+        )
+      ]
+    );
+  }
+
+  void deciveDisconnect() {
+    if (connection != null) { // Disconnect current device if available
+      connection!.finish();
+      bluetoothPageListener.value = !bluetoothPageListener.value;
+      currentDevice = connection = null;
+      connectStatus = "連線成功中斷!";
+      setState(() {});
+      return;
+    }
+  }
+
+  void deviceConnect(BluetoothDevice device) async {
+    connectStatus = "連線到裝置中...";
+    setState(() => progressBarValue = null);
+    deciveDisconnect();
+    try{
+      connection = await BluetoothConnection.toAddress(device.address);
+      bluetoothPageListener.value = !bluetoothPageListener.value;
+      setState(() => currentDevice = device);
+      connection!.input?.listen(handleCommands).onDone(() {
+        connection = currentDevice = null;
+        homePageListener.value = !homePageListener.value;
+        bluetoothPageListener.value = !bluetoothPageListener.value;
+        print('Disconnected by remote request');
+      });
+      connectStatus = "連線成功!";
+    }catch (exception) {
+      if (exception.toString().contains("closed or timeout")) {
+        connectStatus = "連線失敗 (與裝置溝通超時)";
+      }else {
+        connectStatus = "連線失敗 (使用接上Console可看完整錯誤)";
+        //print('Cannot connect, exception occured: \n ${exception.toString()}');
+      }
+    }
+    setState(() => progressBarValue = 0);
+  }
+}
+
+void connectionDialog (BuildContext context, BluetoothDevice device) async =>
   await showGeneralDialog(
     context: context,
     barrierDismissible: false,
@@ -173,37 +250,18 @@ void connectionDialog (BuildContext context) async {
       return StatefulBuilder(
         builder: (context, setState){
           return WillPopScope(
-            onWillPop: () async {
-              return true;
-            },
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  height: MediaQuery.of(context).size.height - 60,
-                  width: MediaQuery.of(context).size.width - 60,
-                  padding: const EdgeInsets.all(30),
-                  decoration: BoxDecoration(
-                      color: Theme.of(context).inputDecorationTheme.fillColor,
-                      borderRadius: const BorderRadius.only(topLeft: Radius.circular(10), topRight: Radius.circular(10))
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                      CircularProgressIndicator(),
-                      SizedBox(width: 10),
-                      Text("連線中"),
-                    ],
-                  )
-                )
-              ]
+            child: DefaultTextStyle(
+              style: const TextStyle(color: Colors.white),
+              child: ConnectionDialog(device: device),
             ),
+            onWillPop: () async {
+              return false;
+            },
           );
         }
       );
     }
   );
-}
 
 Future<void> handleCommands (Uint8List? data) async {
   final List<String> command = ((data == null) ? lastCommand : ascii.decode(data)).replaceAll("\n", "").split(":");
@@ -235,4 +293,43 @@ Future<void> handleCommands (Uint8List? data) async {
       break;
   }
   isInCloseDelay = false;
+}
+
+IconData getDeviceIcon(BluetoothDevice device) {
+  switch(device.type.toUnderlyingValue()){
+    case 1: // Classic
+      return Icons.arrow_forward;
+    case 3: // Dual
+      return Icons.compare_arrows;
+    case 2: // le
+      return Icons.battery_full;
+    default:
+      return Icons.question_mark;
+  }
+}
+
+String getDeviceType(BluetoothDevice device) {
+  switch(device.type.toUnderlyingValue()){
+    case 1: // Classic
+      return "Bluetooth Classic";
+    case 3: // Dual
+      return "Dual-Mode Bluetooth";
+    case 2: // le
+      return "Bluetooth Low Energy";
+    default:
+      return "未知類型";
+  }
+}
+
+String getDeviceBond(BluetoothDevice device){
+  switch(device.bondState.toUnderlyingValue()){
+    case 12: //bonded
+      return "曾經配對";
+    case 11: //bonding
+      return "已經配對";
+    case 10: //none
+      return "尚未配對";
+    default:  //unknown
+      return "未知狀態";
+  }
 }

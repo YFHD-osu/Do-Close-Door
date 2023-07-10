@@ -31,14 +31,12 @@ class MyTaskHandler extends TaskHandler {
   @override
   Future<void> onEvent(DateTime timestamp, SendPort? sendPort) async {
     FlutterForegroundTask.updateService(
-      notificationTitle: 'MyTaskHandler',
-      notificationText: 'eventCount: $_eventCount',
+      notificationTitle: '監聽攝影機在後台運作中',
+      notificationText: '為保持對相機的連續調用，必須運作後台程式',
     );
 
     // Send data to the main isolate.
     sendPort?.send(_eventCount);
-
-    _eventCount++;
   }
 
   @override
@@ -50,7 +48,8 @@ class MyTaskHandler extends TaskHandler {
   @override
   void onButtonPressed(String id) {
     // Called when the notification button on the Android platform is pressed.
-    print('onButtonPressed >> $id');
+    //print('onButtonPressed >> $id');
+    settings.stopForegroundTask();
   }
 
   @override
@@ -93,8 +92,7 @@ class Settings {
           backgroundColor: Colors.orange,
         ),
         buttons: [
-          const NotificationButton(id: 'sendButton', text: 'Send'),
-          const NotificationButton(id: 'testButton', text: 'Test'),
+          const NotificationButton(id: 'exitButton', text: '結束'),
         ],
       ),
       iosNotificationOptions: const IOSNotificationOptions(
@@ -128,9 +126,6 @@ class Settings {
         return false;
       }
     }
-
-    // You can save data using the saveData function.
-    await FlutterForegroundTask.saveData(key: 'customData', value: 'hello');
 
     // Register the receivePort before starting the service.
     final ReceivePort? receivePort = FlutterForegroundTask.receivePort;
@@ -166,7 +161,7 @@ class Settings {
     _receivePort?.listen((message) {
       if (!isServiceRunning.value) stopForegroundTask();
       if (message is int) {
-        print('eventCount: $message');
+        // print('eventCount: $message');
       } else if (message is String) {
         if (message == 'onNotificationPressed') {
           navigatorKey.currentState?.pushNamed('/');

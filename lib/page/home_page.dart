@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:camera/camera.dart';
 import 'bluetooth_page.dart';
 import 'settings_page.dart';
-import 'fileview_page.dart';
 
 late List<CameraDescription> cameras;
 late CameraController cameraController;
@@ -126,8 +125,8 @@ class MyHomePageState extends State<MyHomePage>{
                             color: Colors.red,
                             borderRadius: BorderRadius.circular(30)
                           ),
-                          child: Row(
-                            children: const [
+                          child: const Row(
+                            children: [
                               Icon(Icons.fiber_manual_record, size: 30),
                               SizedBox(width: 2),
                               Text("錄製中", style: TextStyle(fontSize: 20))
@@ -152,20 +151,6 @@ class MyHomePageState extends State<MyHomePage>{
               },
               tooltip: '小窗',
               child: const Icon(Icons.picture_in_picture),
-            ),
-            const SizedBox(width: 10),
-            FloatingActionButton(
-              heroTag: "btn3",
-              onPressed: () async {
-                bool orignalPreviewState = cameraController.value.isPreviewPaused;
-                if (!orignalPreviewState) cameraController.pausePreview();
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const FileViewPage()),
-                ).then((value) async {if (!orignalPreviewState) await cameraController.resumePreview();}
-                ).then((value) => setStateFunc());
-              },
-              tooltip: '檔案',
-              child: const Icon(Icons.folder),
             ),
             const SizedBox(width: 10),
             FloatingActionButton(
