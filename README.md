@@ -1,16 +1,30 @@
-# doclosedoor
+# 關門警告
 
-A new Flutter project.
+## 簡述
+近年來全球暖化的情況愈發惡劣，氣溫一年比一年高，每天到教室想到的第一件事就是盡快開冷氣。\
+而開冷氣不關門是一件十分可怕的事，不僅造成電費的損失，也讓環境的負擔加重。\
+此專案可以在們為關閉時發出警示，並記錄下陷唱畫面，可幫助我們判斷是誰在謀害這個地球。 :D
 
-## Getting Started
+## 電路圖
+<div style="display:inline-block;">
+  <img src="https://github.com/YFHD-osu/Do-Close-Door/assets/92370642/7840911a-0f83-4ccc-a015-19fd0939e378" height="250"> 
+  <img src="https://github.com/YFHD-osu/Do-Close-Door/assets/92370642/bacb68ab-571b-4a98-b3ab-d4941ed21d2a" height="250">
+</div>
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 材料表
+| 名稱                   | 數量 |
+| ---------------------- | :-: |
+| ESP32 開發版           | 1    |
+| DHT11溫溼度感測器       | 1   |
+| SSD1306 OLED           | 1   |
+| 蜂鳴器                 | 2    |
+| LED燈                  | 2    |
+| 200Ω電阻               | 3    |
+| 50V磁簧開關            | 1    |
+| HC-SR04超音波距離感測器 | 1    |
+| 可變電阻               | 1    |
+| 撥動開關	              | 1    |
+| 麵包版                 | 	1   |
+| 搭載Android 9.0以上系統 | 	1   |
+| 杜邦縣	                 | 數條 |
+| 跳線                   | 數條  |
